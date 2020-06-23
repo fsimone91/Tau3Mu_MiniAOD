@@ -254,7 +254,7 @@ private:
 
     std::vector<double>  Muon_innerTrack_highPurity,  Muon_innerTrack_ValidFraction, Muon_Numberofvalidtrackerhits, Muon_validMuonHitComb, Muon_IP2D_BS,  Muon_IP3D_BS,  Muon_IP2D_PV,  Muon_IP3D_PV, Muon_SoftMVA_Val;
     std::vector<double>  DistXY_PVSV,  DistXY_significance_PVSV;
-    std::vector<double>  Triplet_IsoMu1, Triplet_IsoMu2,Triplet_IsoMu3;
+    std::vector<double>  Triplet_IsoMu1, Triplet_IsoMu2, Triplet_IsoMu3;
     std::vector<double>  FlightDistBS_SV,  FlightDistBS_SV_Err,  FlightDistBS_SV_Significance;
 
     std::vector<double>    Mu1_IsGlobal,        Mu2_IsGlobal,        Mu3_IsGlobal,    Mu1_IsPF,  Mu2_IsPF,  Mu3_IsPF;
@@ -266,7 +266,7 @@ private:
      std::vector<float>  alltracks_pt, leadtrack_pt,  leadtrack_eta,  leadtrack_phi;
      uint nprimevtxs, nmuons, evt, run, lumi;
      */
-    };
+};
     
     
     
@@ -461,7 +461,6 @@ void MiniAnaTau3Mu::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
     edm::Handle<std::vector<pat::PackedCandidate> > PFCands;
     iEvent.getByToken(srcCands_,PFCands);
-
 
     reco::BeamSpot beamSpot;
     edm::Handle<reco::BeamSpot> beamSpotHandle;
@@ -960,7 +959,7 @@ if(isAna){
               }
                 
               //cout<<"Valid Vtx1="<<PVertex.isValid()<<endl;
-              if(PVertex.isValid() &&  TauIt->vertexChi2() >0 ){
+              if(PVertex.isValid() && TauIt->vertexChi2() >0 ){
 
                   NTripl.push_back(1);
                   TripletIndex=trIn;
@@ -1128,7 +1127,6 @@ if(isAna){
                 //Matrix covariance to be added!!!!
                   
               ////////////////////  Dimu vertices  ////////////////////
-                  cout << "I'm here" << endl;
               std::vector<reco::TransientTrack> SVTracks12_Vtx, SVTracks23_Vtx, SVTracks13_Vtx;
                   
               SVTracks12_Vtx.push_back(transientTrack1);
@@ -1137,7 +1135,6 @@ if(isAna){
               SVTracks23_Vtx.push_back(transientTrack3);
               SVTracks13_Vtx.push_back(transientTrack1);
               SVTracks13_Vtx.push_back(transientTrack3);
-                  cout << "I'm there" << endl;
               
               KalmanVertexFitter DiMu12_fitter (true);
               TransientVertex DiMu12Vtx = DiMu12_fitter.vertex(SVTracks12_Vtx);
@@ -1159,7 +1156,6 @@ if(isAna){
                   Vtx12_y.push_back(-99);
                   Vtx12_z.push_back(-99);
               }
-              cout << "I'm there2" << endl;
               KalmanVertexFitter DiMu23_fitter (true);
               TransientVertex DiMu23Vtx = DiMu23_fitter.vertex(SVTracks23_Vtx);
               if(DiMu23Vtx.isValid()){
@@ -1202,29 +1198,32 @@ if(isAna){
                   Vtx13_z.push_back(-99);
               }
               
-                  cout << "I'm there3" << endl;
         
                 //Refitted Vars
                 //vector < TransientTrack > ttrks = TripletVtx.refittedTracks();
 
                 /////////////PV Refit//////////////////////////////
 
+                  cout << "PV refit" << endl;
                 //Defining ISO VAR related to the triplet
                 TLorentzVector LV1=TLorentzVector( mu1->px(), mu1->py(), mu1->pz(), mu1->energy() );
                 TLorentzVector LV2=TLorentzVector( mu2->px(), mu2->py(), mu2->pz(), mu2->energy() );
                 TLorentzVector LV3=TLorentzVector( mu3->px(), mu3->py(), mu3->pz(), mu3->energy() );
                 TLorentzVector LVTau = LV1 + LV2 + LV3;
 
+                  
                 int nTracks03_mu1=0, nTracks03_mu2=0, nTracks03_mu3=0;
                 double mindist=9999;
                 double sumPtTrack1=0, sumPtTrack2=0, sumPtTrack3=0, maxSumPtTracks=0;
 
                 math::XYZPoint SVertexPoint = math::XYZPoint(TripletVtx.x(), TripletVtx.y(), TripletVtx.z());
-                for (std::vector<pat::PackedCandidate>::const_iterator cand = PFCands->begin(); cand != PFCands->end();++cand) {
+                uint kk=0;
+                for (std::vector<pat::PackedCandidate>::const_iterator cand = PFCands->begin(); cand != PFCands->end(), kk!= PFCands->size(); ++cand, ++kk) {
+
                     if(  (cand->pt()>1) && (fabs(cand->eta())<2.4) && (cand->trackerLayersWithMeasurement()>5) && (cand->pixelLayersWithMeasurement()>1)  ){
-                        double dR1 = reco::deltaR2(Track1.eta(), cand->eta(), Track1.phi(), cand->phi() );
-                        double dR2 = reco::deltaR2(Track2.eta(), cand->eta(), Track2.phi(), cand->phi() );
-                        double dR3 = reco::deltaR2(Track3.eta(), cand->eta(), Track3.phi(), cand->phi() );
+                        double dR1 = reco::deltaR2(Track1.eta(), Track1.phi(), cand->eta(), cand->phi() );
+                        double dR2 = reco::deltaR2(Track2.eta(), Track2.phi(), cand->eta(), cand->phi() );
+                        double dR3 = reco::deltaR2(Track3.eta(), Track3.phi(), cand->eta(), cand->phi() );
                         //cout<<"Skip muon track"<<endl;
                         if (dR1 < 0.01 || dR2 < 0.01 || dR3 < 0.01) continue;
                         double dz = abs(cand->dz(SVertexPoint));
@@ -1233,7 +1232,7 @@ if(isAna){
                         if(dca_fv<mindist && dca_fv>0) {
                             mindist = dca_fv;
                             //cout<<" MinDist="<<dca_fv<<endl;
-                      }
+                        }
                       //for eack track having pt>1, excluded the muon tracks,
                       //for each muon in the triplet, if deltaR<0.3 and the DCA is smaller than 1 mm
                       //the pt of the track is added -> I will take the largest total pt from the three muons
@@ -1254,6 +1253,7 @@ if(isAna){
                       }
                     }
                 }
+                  
                 Triplet_mindca_iso.push_back(mindist);
                 maxSumPtTracks = std::max(sumPtTrack1, std::max(sumPtTrack2,sumPtTrack3));
                 //cout<<TripletIndex<<" TauMass "<<TauIt->mass()<<" SumPt Tracks in cone="<<maxSumPtTracks<<" TauPt="<<TauIt->pt()<<endl;
@@ -1415,8 +1415,6 @@ if(isAna){
                   Vtx13_x.push_back(-99);
                   Vtx13_y.push_back(-99);
                   Vtx13_z.push_back(-99);
-                  
-                  
                   
                   Mu1_dRtriggerMatch.push_back(-99);
                   Mu2_dRtriggerMatch.push_back(-99);
@@ -2118,6 +2116,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
     MuonPt_HLT_BPMu12_IP6.clear();
     MuonEta_HLT_BPMu12_IP6.clear();
     MuonPhi_HLT_BPMu12_IP6.clear();
+    
     DistXY_PVSV.clear();
     DistXY_significance_PVSV.clear();
     Triplet_IsoMu1.clear();
@@ -2440,7 +2439,7 @@ MiniAnaTau3Mu::beginJob()
     tree_->Branch("DistXY_significance_PVSV", &DistXY_significance_PVSV);
 	tree_->Branch("Triplet_IsoMu1", &Triplet_IsoMu1);
 	tree_->Branch("Triplet_IsoMu2", &Triplet_IsoMu2);
-    tree_->Branch("Triplet_IsoMu3", &Triplet_IsoMu2);
+    tree_->Branch("Triplet_IsoMu3", &Triplet_IsoMu3);
 	tree_->Branch("FlightDistBS_SV", &FlightDistBS_SV);
     tree_->Branch("FlightDistBS_SV_Err", &FlightDistBS_SV_Err);
     tree_->Branch("FlightDistBS_SV_Significance", &FlightDistBS_SV_Significance);

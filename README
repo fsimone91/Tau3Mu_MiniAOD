@@ -11,12 +11,4 @@ Skimmer+Ntuplizer sequences can be run with the config files in SkimTools/SkimX/
 Ntuplizer plugins are: DsPhiPiTreeMakerMINI and MiniAnaTau3Mu
 
 TO BE FIXED
-1-strange crash after endJob when running DsPhiPiTreeMakerMINI ntuplizer, it tries to overwrite an existing rootfile in CMSSW repository
-fatal Root Error: @SUB=TStorageFactoryFile::WriteTObject
-Directory ///cvmfs/cms.cern.ch/slc7_amd64_gcc700/cms/cmssw/CMSSW_10_2_1/external/slc7_amd64_gcc700/data/DataFormats/PatCandidates/data/CovarianceParameterization_version1.root is not writable
-error probably comes from L856
-
-2-fix isolation definition in both ntuplizers
-
-3-some of the vectors filled with new variables have not been cleared:
-
+1- DsPhiPiTreeMakerMINI skim (issues in handling the packedPFcandidate collection)
