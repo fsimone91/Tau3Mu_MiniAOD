@@ -902,7 +902,7 @@ if(isAna){
                         if(Cosdphi_3D>dphi_pv){
                             dphi_pv = Cosdphi_3D;
                             primaryvertex_index=VtxIt;
-                            selVtxId=VtxIt;
+                            selVtxId=k;
                         }
                     }
                 }
