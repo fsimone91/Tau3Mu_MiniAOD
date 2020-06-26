@@ -11,4 +11,4 @@ Skimmer+Ntuplizer sequences can be run with the config files in SkimTools/SkimX/
 Ntuplizer plugins are: DsPhiPiTreeMakerMINI and MiniAnaTau3Mu
 
 TO BE FIXED
-1- DsPhiPiTreeMakerMINI skim (issues in handling the packedPFcandidate collection)
+- GenParticle info

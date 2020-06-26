@@ -282,7 +282,7 @@ MiniAnaTau3Mu::MiniAnaTau3Mu(const edm::ParameterSet& iConfig){
     vertex_ = consumes<edm::View<reco::Vertex> > (iConfig.getParameter<edm::InputTag>("VertexLabel"));
     trackToken_ = consumes<edm::View<reco::Track> > (edm::InputTag("generalTracks"));
 	//srcCands = consumes<std::vector<pat::PackedCandidate> >(iConfig.getParameter<edm::InputTag>("srcCands")));
-	srcCands_ = consumes<std::vector<pat::PackedCandidate> >(edm::InputTag("packedPFCandidates"));
+    srcCands_ = consumes<std::vector<pat::PackedCandidate> >(edm::InputTag("packedPFCandidates"));
     genParticles_ = consumes<edm::View<reco::GenParticle>  > (iConfig.getParameter<edm::InputTag>("genParticleLabel"));
     Cand3Mu_ = consumes<edm::View<reco::CompositeCandidate> > (iConfig.getParameter<edm::InputTag>("Cand3MuLabel"));
     puToken_ =   consumes<std::vector<PileupSummaryInfo> >(iConfig.getParameter<edm::InputTag>("pileupSummary"));
@@ -348,7 +348,8 @@ bool tracksMatchByDeltaR(const reco::Track* trk1, const reco::Track* trk2)
 
 bool tracksMatchByDeltaR2(const reco::TransientTrack trk1, const reco::Track* trk2)
 {
-  //cout<<" pv_t eta="<<trk1.track().eta()<<" sv_t eta="<<trk2->eta()<<" deltaR(tk1, tk2)="<<reco::deltaR(trk1.track(), *trk2)<<endl;
+//    cout << "+++ tracksMatchByDeltaR2 " << endl;
+//  cout<<" pv_t eta="<<trk1.track().eta()<<" sv_t eta="<<trk2->eta()<<" deltaR(tk1, tk2)="<<reco::deltaR(trk1.track(), *trk2)<<endl;
   if ( reco::deltaR(trk1.track(), *trk2) < 1.e-2 && trk1.track().charge() == trk2->charge() ) return true;
   else return false;
 }
@@ -382,11 +383,10 @@ void removeTracks2(std::vector<reco::Track*> pvTracks, const std::vector<reco::T
 
 void removeTracks3(vector<reco::TransientTrack> &pvTracks, const std::vector<reco::Track*> svTracks)
 {
-  // cout<<"Inside Remove Tracks: pvtracks="<<pvTracks.size()<<endl;
   for ( std::vector<reco::Track*>::const_iterator svTrack = svTracks.begin(); svTrack != svTracks.end(); ++svTrack ){
     for(uint f=0;f<pvTracks.size(); f++){
       if ( tracksMatchByDeltaR2(pvTracks.at(f), *svTrack) ) {
-	//	cout<<" track to be erased position: "<<f<<" eta="<<pvTracks.at(f).track().eta()<<endl;
+//        cout<<" track to be erased position: "<<f<<" eta="<<pvTracks.at(f).track().eta()<<endl;
         pvTracks.erase(pvTracks.begin()+f);
         break;
       }
@@ -752,8 +752,9 @@ cout<<" PV size ="<<vertices->size()<<endl;
 
 uint kk=0;
 std::vector<uint> VtxIdV;
-cout<<"Number of PFCands="<<PFCands->size()<<endl;
+cout<<"++Number of PFCands="<<PFCands->size()<<endl;
 std::vector<uint> SelectedCandIdx;
+
 vector<pat::PackedCandidate> MyPFCands;
 for (std::vector<pat::PackedCandidate>::const_iterator cand = PFCands->begin(); cand != PFCands->end(), kk!= PFCands->size(); ++cand, ++kk) {
     
@@ -763,8 +764,8 @@ for (std::vector<pat::PackedCandidate>::const_iterator cand = PFCands->begin(); 
   int key = cand->vertexRef().key();
   int quality = cand->pvAssociationQuality();
   
-  //	  if (quality != pat::PackedCandidate::UsedInFitTight)  continue;
-  //	  if (quality != pat::PackedCandidate::UsedInFitLoose)  continue;
+  //      if (quality != pat::PackedCandidate::UsedInFitTight)  continue;
+  //      if (quality != pat::PackedCandidate::UsedInFitLoose)  continue;
   // cout<<kk<<" vtx ref key="<<key<<" cand pt="<<cand->pt()<<" vtx x="<<cand->vertexRef()->x()<<endl;
   VtxIdV.push_back(key);
   SelectedCandIdx.push_back(kk);
@@ -884,7 +885,9 @@ if(isAna){
         double dphi_pv = -1.0;
         uint primaryvertex_index=0;
         TLorentzVector ThreeCandidate;
-        uint selVtxId;
+        
+        uint selVtxId = 0;
+        
         ThreeCandidate.SetPtEtaPhiM(TauIt->pt(), TauIt->eta(), TauIt->phi(), TauIt->mass());
 
         if(VtxIdV.size()>0 && vertices->size()>0) {
@@ -898,20 +901,20 @@ if(isAna){
                         if(Cosdphi_3D>dphi_pv){
                             dphi_pv = Cosdphi_3D;
                             primaryvertex_index=VtxIt;
-                            selVtxId=k;
                         }
                     }
                 }
             }
             
-            //	    cout<<"Cosdphi_3D= "<<dphi_pv<<" selVtxId="<<selVtxId<<" primaryvertex_index="<<primaryvertex_index<<endl;
+            
+            //        cout<<"Cosdphi_3D= "<<dphi_pv<<" selVtxId="<<selVtxId<<" primaryvertex_index="<<primaryvertex_index<<endl;
             std::vector<reco::TransientTrack> pvTracks_original;
             TransientTrackMap pvTrackMap_refit;
 
 
             //cout<<" trans trk coll before ref="<<transTracksAssoToVtx.at(selVtxId).size()<<endl;
-            //	    for(uint t=0; t<transTracksAssoToVtx.at(selVtxId).size(); t++){
-            //	      cout<<"pv track eta="<<transTracksAssoToVtx.at(selVtxId).at(t).track().eta()<<endl;}
+            //        for(uint t=0; t<transTracksAssoToVtx.at(selVtxId).size(); t++){
+            //          cout<<"pv track eta="<<transTracksAssoToVtx.at(selVtxId).at(t).track().eta()<<endl;}
             
             cout << "transTracksAssoToVtx.at(selVtxId).size() before: " << transTracksAssoToVtx.at(selVtxId).size() << endl;
             
@@ -926,14 +929,14 @@ if(isAna){
             else PVertex_bis_fit = false;
             
             removeTracks3(transTracksAssoToVtx.at(selVtxId),  SVTrackRef);
-            //	    std::vector<reco::TransientTrack> pvTracks_refit;
+            //        std::vector<reco::TransientTrack> pvTracks_refit;
             
             //            for ( TransientTrackMap::iterator pvTrack = pvTrackMap_refit.begin();  pvTrack != pvTrackMap_refit.end(); ++pvTrack ) {
             //  pvTracks_refit.push_back(pvTrack->second);}
             
 
             //cout<<" Closest PV index "<<primaryvertex_index<<" x="<<(*vertices)[primaryvertex_index].x()<<" y="<<(*vertices)[primaryvertex_index].y()<<" z="<<(*vertices)[primaryvertex_index].z()<<endl;
-            //	    cout<<"after refit pvTracks.size()="<<transTracksAssoToVtx.at(selVtxId).size()<<endl;
+            //        cout<<"after refit pvTracks.size()="<<transTracksAssoToVtx.at(selVtxId).size()<<endl;
 
             if(transTracksAssoToVtx.at(selVtxId).size() >1){
                 
@@ -1210,7 +1213,6 @@ if(isAna){
                 TLorentzVector LV2=TLorentzVector( mu2->px(), mu2->py(), mu2->pz(), mu2->energy() );
                 TLorentzVector LV3=TLorentzVector( mu3->px(), mu3->py(), mu3->pz(), mu3->energy() );
                 TLorentzVector LVTau = LV1 + LV2 + LV3;
-
                   
                 int nTracks03_mu1=0, nTracks03_mu2=0, nTracks03_mu3=0;
                 double mindist=9999;
@@ -1218,20 +1220,22 @@ if(isAna){
 
                 math::XYZPoint SVertexPoint = math::XYZPoint(TripletVtx.x(), TripletVtx.y(), TripletVtx.z());
                 uint kk=0;
-                for (std::vector<pat::PackedCandidate>::const_iterator cand = PFCands->begin(); cand != PFCands->end(), kk!= PFCands->size(); ++cand, ++kk) {
 
-                    if(  (cand->pt()>1) && (fabs(cand->eta())<2.4) && (cand->trackerLayersWithMeasurement()>5) && (cand->pixelLayersWithMeasurement()>1)  ){
-                        double dR1 = reco::deltaR2(Track1.eta(), Track1.phi(), cand->eta(), cand->phi() );
-                        double dR2 = reco::deltaR2(Track2.eta(), Track2.phi(), cand->eta(), cand->phi() );
-                        double dR3 = reco::deltaR2(Track3.eta(), Track3.phi(), cand->eta(), cand->phi() );
+                for (std::vector<pat::PackedCandidate>::const_iterator cand = PFCands->begin(); cand != PFCands->end(), kk!= PFCands->size(); ++cand, ++kk) {
+                    if(  (cand->pt()>1) && (fabs(cand->eta())<2.4) && (cand->trackerLayersWithMeasurement()>5) && (cand->pixelLayersWithMeasurement()>1) && (cand->trackHighPurity())  ){
+                        
+                        double dR1 = sqrt( reco::deltaR2(Track1.eta(), Track1.phi(), cand->eta(), cand->phi()) );
+                        double dR2 = sqrt( reco::deltaR2(Track2.eta(), Track2.phi(), cand->eta(), cand->phi()) );
+                        double dR3 = sqrt( reco::deltaR2(Track3.eta(), Track3.phi(), cand->eta(), cand->phi()) );
                         //cout<<"Skip muon track"<<endl;
                         if (dR1 < 0.01 || dR2 < 0.01 || dR3 < 0.01) continue;
+                        
                         double dz = abs(cand->dz(SVertexPoint));
                         double dxy = abs(cand->dxy(SVertexPoint));
                         double dca_fv = sqrt(dz*dz+dxy*dxy);
                         if(dca_fv<mindist && dca_fv>0) {
                             mindist = dca_fv;
-                            //cout<<" MinDist="<<dca_fv<<endl;
+//                            cout<<" MinDist="<<dca_fv<<endl;
                         }
                       //for eack track having pt>1, excluded the muon tracks,
                       //for each muon in the triplet, if deltaR<0.3 and the DCA is smaller than 1 mm
@@ -1532,8 +1536,8 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
     Muon_simFlavour.push_back(mu->simFlavour());
     Muon_simType.push_back(mu->simType());
     Muon_simBX.push_back(mu->simBX());
-    //	    Muon_simTpEvent.push_back(mu->simTpEvent());
-    //	    Muon_simMatchQuality.push_back(mu->simMatchQuality());
+    //        Muon_simTpEvent.push_back(mu->simTpEvent());
+    //        Muon_simMatchQuality.push_back(mu->simMatchQuality());
     //Vtx position
     Muon_vx.push_back(mu->vx());
     Muon_vy.push_back(mu->vy());
@@ -1561,7 +1565,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
     Muon_numberOfMatchedStations.push_back(mu->numberOfMatchedStations());
     Muon_numberOfMatches.push_back(mu->numberOfMatches(reco::Muon::SegmentArbitration));
     Muon_SoftMVA_Val.push_back(mu->softMvaValue());
-        
+    
     Muon_timeAtIpInOut.push_back(mu->time().timeAtIpInOut);
     Muon_timeAtIpInOutErr.push_back(mu->time().timeAtIpInOutErr);
 
@@ -1576,7 +1580,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
         for (int i = 0; i < gMpattern.numberOfAllHits(reco::HitPattern::TRACK_HITS); i++) {
             uint32_t hit = gMpattern.getHitPattern(reco::HitPattern::TRACK_HITS, i);
             if (!gMpattern.validHitFilter(hit)) continue;
-              
+            
             int muStation0 = gMpattern.getMuonStation(hit) - 1;
             if (muStation0 >= 0 && muStation0 < 4) {
               if (gMpattern.muonDTHitFilter(hit)) fvDThits[muStation0]++;
@@ -1595,7 +1599,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
         }else{
           Muon_validMuonHitComb.push_back(-99);
         }
-        
+    
         if (mu->isGlobalMuon()) {
             Muon_GLnormChi2.push_back(mu->globalTrack()->normalizedChi2());
             Muon_GLhitPattern_numberOfValidMuonHits.push_back(mu->globalTrack()->hitPattern().numberOfValidMuonHits());
@@ -1604,7 +1608,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
             Muon_GLnormChi2.push_back(-999);
             Muon_GLhitPattern_numberOfValidMuonHits.push_back(-999);
         }
-        
+    
         if (mu->innerTrack().isNonnull()){
             Muon_trackerLayersWithMeasurement.push_back(mu->innerTrack()->hitPattern().trackerLayersWithMeasurement());
             bool ishighq = mu->innerTrack()->quality(reco::Track::highPurity);
@@ -1658,16 +1662,16 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
         Muon_combinedQuality_globalDeltaEtaPhi.push_back(mu->combinedQuality().globalDeltaEtaPhi);
         Muon_combinedQuality_tightMatch.push_back(mu->combinedQuality().tightMatch);
         Muon_combinedQuality_glbTrackProbability.push_back(mu->combinedQuality().glbTrackProbability);
-        
+    
         Muon_calEnergy_em.push_back(mu->calEnergy().em);
         Muon_calEnergy_emS9.push_back(mu->calEnergy().emS9);
         Muon_calEnergy_emS25.push_back(mu->calEnergy().emS25);
         Muon_calEnergy_had.push_back(mu->calEnergy().had);
         Muon_calEnergy_hadS9.push_back(mu->calEnergy().hadS9);
-        
+    
         Muon_segmentCompatibility.push_back(muon::segmentCompatibility(*mu));
         Muon_caloCompatibility.push_back(muon::caloCompatibility(*mu));
-        
+    
         Muon_ptErrOverPt.push_back( (mu->muonBestTrack()->ptError()/mu->muonBestTrack()->pt()) );
         Muon_BestTrackPt.push_back( mu->muonBestTrack()->pt() );
         Muon_BestTrackPtErr.push_back( mu->muonBestTrack()->ptError() );
@@ -1677,7 +1681,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
 
         Muon_BestTrackPhi.push_back( mu->muonBestTrack()->phi() );
         Muon_BestTrackPhiErr.push_back( mu->muonBestTrack()->phiError() );
-        
+    
         const reco::MuonIsolation Iso03 = mu->isolationR03();
         const reco::MuonIsolation Iso05 = mu->isolationR05();
         if (mu->isIsolationValid()) {
@@ -1824,8 +1828,8 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
     Muon_simFlavour.clear();
     Muon_simType.clear();
     Muon_simBX.clear();
-//	Muon_simTpEvent.clear();
-//	Muon_simMatchQuality.clear();
+//    Muon_simTpEvent.clear();
+//    Muon_simMatchQuality.clear();
     MuonEnergy.clear();
     MuonCharge.clear();
     
