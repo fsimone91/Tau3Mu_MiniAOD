@@ -431,14 +431,11 @@ void MiniAnaTau3Mu::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     edm::Handle< edm::View<pat::Muon> > muons;
     iEvent.getByToken(muons_, muons);
     
-    
     edm::Handle<edm::View<reco::CompositeCandidate> > Cand3Mu;
     iEvent.getByToken(Cand3Mu_, Cand3Mu);
     
-    
     edm::Handle< edm::View<reco::GenParticle> > genParticles;
     iEvent.getByToken(genParticles_, genParticles);
-    
     
     edm::Handle<edm::View<reco::Track> > trackCollection;
     iEvent.getByToken(trackToken_, trackCollection);
@@ -456,6 +453,7 @@ void MiniAnaTau3Mu::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     iEvent.getByToken(algToken_,alg);
 
     edm::ESHandle<TransientTrackBuilder> theTransientTrackBuilder;
+    
     iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",theTransientTrackBuilder);
     theTransientTrackBuilder_ = theTransientTrackBuilder.product();
 
@@ -777,11 +775,12 @@ for(uint VtxIt =0;VtxIt<vertices->size();VtxIt++ ){
   cout<<"Vtx id="<<VtxIt<<" x="<<(*vertices)[VtxIt].x()<<endl;
   }*/
 
+    
 //cout<<" vtx id size="<<VtxIdV.size()<<endl;
 sort( VtxIdV.begin(), VtxIdV.end() );
 
 VtxIdV.erase( unique(VtxIdV.begin(), VtxIdV.end() ),VtxIdV.end() );
-cout<<"After removing duplicates: vtx id size="<<VtxIdV.size()<<endl;
+
 /*
 for(uint i=0; i<VtxIdV.size();i++){
   cout<<i<<" vtx id="<<VtxIdV.at(i)<<endl;
@@ -811,7 +810,7 @@ for(uint i=0; i<VtxIdV.size();i++){
    AssoCandToVtx.push_back(tmp_cand);
 }
 //cout<<" AssoCandToVtx.size()="<<AssoCandToVtx.size()<<endl;
-
+    
 vector<vector<reco::TransientTrack>> transTracksAssoToVtx;
 
 for(uint i=0; i<AssoCandToVtx.size();i++){
@@ -823,14 +822,14 @@ for(uint i=0; i<AssoCandToVtx.size();i++){
       //cout<<" ---->ass tracks eta="<<c->eta()<<endl;
       newTrackCollection->push_back(*(c->bestTrack()));
   }
-  //cout<<i<<" vertex ID="<<VtxIdV.at(i)<<"newTrackCollection size="<<newTrackCollection->size()<<endl;
+//  cout<<i<<" vertex ID="<<VtxIdV.at(i)<<"newTrackCollection size="<<newTrackCollection->size()<<endl;
   for (std::vector<reco::Track>::const_iterator iter = newTrackCollection->begin(); iter != newTrackCollection->end(); ++iter){
       reco::TransientTrack tt = theTransientTrackBuilder->build(*iter);
       transTracks.push_back(tt);
   }
   transTracksAssoToVtx.push_back(transTracks);
-  /*cout<<" trans Tracks size="<<transTracksAssoToVtx.at(i).size()<<endl;
-  for(uint f=0;f<transTracksAssoToVtx.at(i).size(); f++){
+//  cout<<" trans Tracks size="<<transTracksAssoToVtx.at(i).size()<<endl;
+  /*for(uint f=0;f<transTracksAssoToVtx.at(i).size(); f++){
   cout<<f<<" stored trtrk eta="<<transTracksAssoToVtx.at(i).at(f).track().eta()<<endl;}*/
 }
 
@@ -892,22 +891,25 @@ if(isAna){
 
         if(VtxIdV.size()>0 && vertices->size()>0) {
             for(uint VtxIt =0;VtxIt<vertices->size();VtxIt++ ){
+//                cout << "vertices n." << VtxIt << endl;
                 for(uint k=0;k<VtxIdV.size();k++){
+//                    cout << "VtxIdV.at("<<k<<") = " << VtxIdV.at(k) << endl;
                     if(VtxIdV[k]==VtxIt){
-                        // cout<<"Vtx id="<<VtxIt<<" x="<<(*vertices)[VtxIt].x()<<endl;
+//                         cout<<"Vtx id="<<VtxIt<<" x="<<(*vertices)[VtxIt].x()<<endl;
                         TVector3 Dv3D_reco(TripletVtx.x() - (*vertices)[VtxIt].x(), TripletVtx.y() - (*vertices)[VtxIt].y(), TripletVtx.z() - (*vertices)[VtxIt].z());
                         double Cosdphi_3D = Dv3D_reco.Dot(ThreeCandidate.Vect())/(Dv3D_reco.Mag()*ThreeCandidate.Vect().Mag());
-                        //cout<<"cosDPhi3D="<<Cosdphi_3D<<endl;
+//                        cout<<"cosDPhi3D="<<Cosdphi_3D<<endl;
                         if(Cosdphi_3D>dphi_pv){
                             dphi_pv = Cosdphi_3D;
                             primaryvertex_index=VtxIt;
+                            selVtxId=VtxIt;
                         }
                     }
                 }
             }
             
             
-            //        cout<<"Cosdphi_3D= "<<dphi_pv<<" selVtxId="<<selVtxId<<" primaryvertex_index="<<primaryvertex_index<<endl;
+//                    cout<<"Cosdphi_3D= "<<dphi_pv<<" selVtxId="<<selVtxId<<" primaryvertex_index="<<primaryvertex_index<<endl;
             std::vector<reco::TransientTrack> pvTracks_original;
             TransientTrackMap pvTrackMap_refit;
 
@@ -928,7 +930,12 @@ if(isAna){
             }
             else PVertex_bis_fit = false;
             
-            removeTracks3(transTracksAssoToVtx.at(selVtxId),  SVTrackRef);
+            vector<reco::TransientTrack> transTracksAssoToVtx_copy;
+            for(std::vector<reco::TransientTrack>::const_iterator transTrack_it = transTracksAssoToVtx.at(selVtxId).begin(); transTrack_it != transTracksAssoToVtx.at(selVtxId).end(); ++transTrack_it){
+                transTracksAssoToVtx_copy.push_back(*transTrack_it);
+            }
+            
+            removeTracks3(transTracksAssoToVtx_copy,  SVTrackRef);
             //        std::vector<reco::TransientTrack> pvTracks_refit;
             
             //            for ( TransientTrackMap::iterator pvTrack = pvTrackMap_refit.begin();  pvTrack != pvTrackMap_refit.end(); ++pvTrack ) {
@@ -938,14 +945,14 @@ if(isAna){
             //cout<<" Closest PV index "<<primaryvertex_index<<" x="<<(*vertices)[primaryvertex_index].x()<<" y="<<(*vertices)[primaryvertex_index].y()<<" z="<<(*vertices)[primaryvertex_index].z()<<endl;
             //        cout<<"after refit pvTracks.size()="<<transTracksAssoToVtx.at(selVtxId).size()<<endl;
 
-            if(transTracksAssoToVtx.at(selVtxId).size() >1){
+            if(transTracksAssoToVtx_copy.size() >1){
                 
-              RefittedPV_NTracks.push_back(transTracksAssoToVtx.at(selVtxId).size());
+              RefittedPV_NTracks.push_back(transTracksAssoToVtx_copy.size());
                 
-                cout << "transTracksAssoToVtx.at(selVtxId).size() after: " << transTracksAssoToVtx.at(selVtxId).size() << endl;
+                cout << "transTracksAssoToVtx_copy.size() after: " << transTracksAssoToVtx_copy.size() << endl;
                 
               KalmanVertexFitter PV_fitter (true);
-              TransientVertex PVertex = PV_fitter.vertex(transTracksAssoToVtx.at(selVtxId));
+              TransientVertex PVertex = PV_fitter.vertex(transTracksAssoToVtx_copy);
               RefittedPV_isValid.push_back(PVertex.isValid());
               RefittedPV_Chi2.push_back(PVertex.totalChiSquared());
               RefittedPV_nDOF.push_back(PVertex.degreesOfFreedom());
