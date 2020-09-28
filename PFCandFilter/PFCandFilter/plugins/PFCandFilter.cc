@@ -131,7 +131,7 @@ PFCandFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
      //cout<<kk<<" PFCand: pt="<<cand->pt()<<" fabs_eta"<<fabs(cand->eta())<<" vtx ref "<<cand->vertexRef().isNull()<<" q="<<cand->charge()<<endl;
 
      //if(cand->charge()!=0 && cand->vertexRef().isNull()  && cand->pt() > 2 && fabs(cand->eta())<2.4 && cand->trackerLayersWithMeasurement()>5 &&  cand->pixelLayersWithMeasurement()>0 ) {
-     if(cand->pt() > 2 && fabs(cand->eta())<2.4 ) {
+     if(cand->pt() > 2 && fabs(cand->eta())<2.4 && cand->charge()!=0 && cand->hasTrackDetails()!=0 && cand->trackerLayersWithMeasurement()>5 && cand->pixelLayersWithMeasurement()>=1) {
        MyPFCands->push_back(*cand);
        theCand.push_back(*cand);
        //selectedPFCand->push_back(*cand);
@@ -139,14 +139,14 @@ PFCandFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
      }
    }
 
-   for (std::vector<pat::PackedCandidate>::const_iterator c = theCand.begin(); c != theCand.end(); ++c) {
-     cout<<" cand pt="<<c->pt()<<endl;}
+   //for (std::vector<pat::PackedCandidate>::const_iterator c = theCand.begin(); c != theCand.end(); ++c) {
+     //cout<<" cand pt="<<c->pt()<<endl;}
    if( MyPFCands->size()>0) myflt=true;
-   if( MyPFCands->size()>0) cout<<"-----------Good Evt------------ size="<<MyPFCands->size()<<endl;
-   return myflt;
    //   if( MyPFCands->size()>0) iEvent.put(std::move(MyPFCands));
    //if( MyPFCands->size()>0) iEvent.emplace(MyPFCands2, std::move(theCand));
    if( MyPFCands->size()>0)edm::OrphanHandle< vector<pat::PackedCandidate> > oh = iEvent.emplace(MyPFCands2, theCand);
+   if( MyPFCands->size()>0) cout<<"-----------Good Evt------------ size="<<MyPFCands->size()<<endl;
+   return myflt;
 			     
 } 
 

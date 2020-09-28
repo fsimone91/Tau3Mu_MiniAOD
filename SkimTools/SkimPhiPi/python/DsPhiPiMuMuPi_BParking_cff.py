@@ -15,6 +15,18 @@ Tau3MuHLTFilter.throw = cms.bool(False)
 Tau3MuHLTFilter.HLTPaths = ["HLT_Mu8*","HLT_Mu7*","HLT_Mu9_IP*","HLT_Mu10p5_IP*", "HLT_Mu12_IP*","HLT_Mu8p5*"]
 #list taken from https://github.com/cms-sw/cmssw/blob/CMSSW_9_2_X/HLTrigger/Configuration/tables/GRun.txt
 
+PatMuons = patMuons.clone(
+    src = cms.InputTag("muons"),
+    useParticleFlow = cms.bool( False ),
+    #embedHighLevelSelection = cms.bool(True),
+    computeMiniIso = cms.bool(False),
+    computeMuonMVA= cms.bool(False),
+    computeSoftMuonMVA = cms.bool(True),
+    addTriggerMatching = cms.bool(False),
+    addGenMatch   = cms.bool(False),
+    embedGenMatch = cms.bool(True),
+)
+
 
 looseMuons = cms.EDFilter("PATMuonSelector",
                           src = cms.InputTag("slimmedMuons"),
@@ -44,13 +56,18 @@ TwoMuonsCandFilter = cms.EDFilter("CandViewCountFilter",
                                     #filter = cms.bool(True)
 )
 
-
-LooseTrack = cms.EDFilter("CandPtrSelector",
+LooseTrack = cms.EDFilter("PFCandFilter",
+#LooseTrack = cms.EDFilter("CandPtrSelector", 
                           src = cms.InputTag("packedPFCandidates"),
                           cut = cms.string("pt > 2 &&  abs(eta)<2.4 &&  (charge!=0) && hasTrackDetails() && trackerLayersWithMeasurement()>5 && pixelLayersWithMeasurement()>=1"),
-                          #filter = cms.bool(True)                                
+                          filter = cms.bool(True)                                
 )
 
+LooseTrackCandidate = cms.EDProducer("TrackFromCandProducer",
+				src = cms.InputTag("LooseTrack")
+				#src = cms.InputTag("packedPFCandidates")
+)
+##
 
 OneTrackFilter  = cms.EDFilter("CandViewCountFilter",
                                src = cms.InputTag("LooseTrack"),
@@ -59,6 +76,11 @@ OneTrackFilter  = cms.EDFilter("CandViewCountFilter",
 )
 
 
+RecoTrackCand = cms.EDProducer("ConcreteChargedCandidateProducer",
+                                src = cms.InputTag("LooseTrackCandidate"),
+                                particleType = cms.string("pi+"),
+)
+
 
 DiMuonCand  = cms.EDProducer("CandViewShallowCloneCombiner",
                              checkCharge = cms.bool(False),
@@ -66,7 +88,6 @@ DiMuonCand  = cms.EDProducer("CandViewShallowCloneCombiner",
                              cut = cms.string('(abs(charge)=0) && (mass < 1.5) && (mass >0.5)'),
                               decay = cms.string("looseMuons looseMuons")
 )
-
 
 
 DiMuonCandFilter = cms.EDFilter("CandViewCountFilter",
@@ -79,17 +100,19 @@ DiMuonCandFilter = cms.EDFilter("CandViewCountFilter",
 TwoMuonsOneTrackCand = cms.EDProducer("CandViewShallowCloneCombiner",
                                       checkCharge = cms.bool(False),
                                       cut = cms.string(' (abs(charge)=1) && ((daughter(0).charge+daughter(1).charge)==0) && (daughter(0).eta!=daughter(1).eta) && (daughter(2).eta!=daughter(1).eta) && (daughter(2).eta!=daughter(0).eta) && (mass < 3.0) && (mass >0.8)'),
-                                      decay = cms.string("looseMuons looseMuons LooseTrack")
+                                      #cut = cms.string(' (abs(charge)=0) && ((daughter(0).charge+daughter(1).charge)==0) && (daughter(0).eta!=daughter(1).eta)'),
+                                      decay = cms.string("looseMuons looseMuons RecoTrackCand")
 )
 
-
-
 TwoMuonsOneTrackKalmanVtxFit = cms.EDProducer("KalmanVertexFitCompositeCandProducer",
-                                              src = cms.InputTag("TwoMuonsOneTrackCand"),
-                                              #cut = cms.string('mass <5'),                                                                                       
-                                              )
+                                              src = cms.InputTag("TwoMuonsOneTrackCand")
+                                              #cut = cms.string('mass <5'),                          
+)
 
-
+TwoMuonsOneTrackKinVtxFit = cms.EDProducer("KinematicVertexFitCompositeCandProducer",
+					src = cms.InputTag("TwoMuonsOneTrackCand"),
+    					setPdgId = cms.uint32(17)
+)
 
 TwoMuonsOneTrackCandFilter = cms.EDFilter("CandViewCountFilter",
                                     src = cms.InputTag("TwoMuonsOneTrackCand"),
@@ -141,26 +164,23 @@ PlotsAfterLooseMuon = cms.EDAnalyzer('RecoMuonAnalyzer',
 TwoMuOneTrackSelSeq = cms.Sequence(InitialPlots *
                                Tau3MuHLTFilter *
                                PlotsAfterTrigger *
-                               LooseTrack *
-                               OneTrackFilter *
                                PlotsAfterOnePFCand *   
                                looseMuons *
                                PlotsAfterLooseMuon *
                                TwoMuonsFilter *
-                               DiMuonCand *
+			       DiMuonCand *
                                DiMuonCandFilter *
                                PlotsAfterDiMuonCand *
-                               #LooseTrack *
+                               LooseTrack *
+			       OneTrackFilter *
+                               LooseTrackCandidate *
+			       RecoTrackCand *
                                TwoMuonsOneTrackCand *
                                TwoMuonsOneTrackKalmanVtxFit *
                                PlotsAfter2Mu1Track *
                                TwoMuonsOneTrackCandFilter *
                                PlotsAfterPhiPiCandSel 
                                )
-
-
-
-
 
 
 
