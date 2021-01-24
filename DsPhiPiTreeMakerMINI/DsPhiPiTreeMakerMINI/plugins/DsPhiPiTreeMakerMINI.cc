@@ -251,7 +251,17 @@ private:
     std::vector<double>  Track_pt, Track_eta, Track_phi, Track_charge, Track_normalizedChi2, Track_numberOfValidHits, Track_dxy, Track_dxyError, Track_dz, Track_dzError, Track_vx, Track_vy, Track_vz;
     std::vector<double>  Tr_Pt, Tr_Phi, Tr_Eta;
     std::vector<int>  Track_pdgId;
-    
+   
+    std::vector<double> RefTrack1_Pt, RefTrack1_Eta, RefTrack1_Phi, RefTrack1_TripletIndex;
+    std::vector<double> RefTrack2_Pt, RefTrack2_Eta, RefTrack2_Phi, RefTrack2_TripletIndex;
+    std::vector<double> RefTrack3_Pt, RefTrack3_Eta, RefTrack3_Phi, RefTrack3_TripletIndex;
+
+    std::vector<double> RefittedSV_Chi2, RefittedSV_nDOF, RefittedSV_Mass;
+
+    std::vector<double> IsoTrackMu1_Pt, IsoTrackMu1_Eta, IsoTrackMu1_Phi;
+    std::vector<double> IsoTrackMu2_Pt, IsoTrackMu2_Eta, IsoTrackMu2_Phi;
+    std::vector<double> IsoTrackMu3_Pt, IsoTrackMu3_Eta, IsoTrackMu3_Phi;
+ 
     std::vector<double> PV_x,  PV_y,  PV_z,  PV_NTracks;
     std::vector<double> BS_x,  BS_y,  BS_z;
     std::vector<double> Vtx12_x, Vtx23_x, Vtx13_x, Vtx12_y, Vtx23_y, Vtx13_y, Vtx12_z, Vtx23_z, Vtx13_z, Vtx12_Chi2, Vtx23_Chi2, Vtx13_Chi2, Vtx12_nDOF, Vtx23_nDOF, Vtx13_nDOF;
@@ -856,26 +866,26 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
             if(!(PhiIt->vertexChi2()>0)) continue;
 
             /////////////////VertexFit///////////////////////////////////
-            TrackRef trk01, trk02;
-            if (mu1->isGlobalMuon()) { trk01 = mu1->get<TrackRef,reco::CombinedMuonTag>();}
-            else { trk01 = mu1->get<TrackRef>();}
-            if (mu2->isGlobalMuon()) { trk02 = mu2->get<TrackRef,reco::CombinedMuonTag>();}
-            else{ trk02 = mu2->get<TrackRef>();}
-            //if (mu3->isGlobalMuon()) { trk3 = mu3->get<TrackRef,reco::CombinedMuonTag>();}
-            //else{  trk3 = mu3->get<TrackRef>();}
-            //cout<<" trk1 id="<<trk1.id()<<" tr2:"<<trk2.id()<<" trk3="<<trk3.id()<<endl;
-            const reco::TransientTrack transientTrack1=theTransientTrackBuilder_->build( trk01 );
-            const reco::TransientTrack transientTrack2=theTransientTrackBuilder_->build( trk02 );
+            TrackRef trk1, trk2;
+            trk1 = mu1->innerTrack();
+            trk2 = mu2->innerTrack();
+            //if (mu1->isGlobalMuon()) { trk1 = mu1->get<TrackRef,reco::CombinedMuonTag>();}
+            //else { trk1 = mu1->get<TrackRef>();}
+            //if (mu2->isGlobalMuon()) { trk2 = mu2->get<TrackRef,reco::CombinedMuonTag>();}
+            //else{ trk2 = mu2->get<TrackRef>();}
+            //cout<<" trk1 id="<<trk1.id()<<" tr2:"<<trk2.id()<<endl;
+            const reco::TransientTrack transientTrack1=theTransientTrackBuilder_->build( trk1 );
+            const reco::TransientTrack transientTrack2=theTransientTrackBuilder_->build( trk2 );
             reco::Track Track1 =transientTrack1.track();
             reco::Track Track2 =transientTrack2.track();
             reco::Track Track_3 =transientTrack3.track();
             reco::Track* TrackRef1=&Track1;
             reco::Track* TrackRef2=&Track2;
             reco::Track* TrackRef3=&Track_3;
-            vector<reco::Track*> SVTrackRef2;
-            SVTrackRef2.push_back(TrackRef1);
-            SVTrackRef2.push_back(TrackRef2);
-            SVTrackRef2.push_back(TrackRef3); //da sistemare con kin fit phi->2mu
+            vector<reco::Track*> SVTrackRef;
+            SVTrackRef.push_back(TrackRef1);
+            SVTrackRef.push_back(TrackRef2);
+            SVTrackRef.push_back(TrackRef3); //da sistemare con kin fit phi->2mu
 
             ///////////////PV taken as closest to candidate
             reco::Vertex TripletVtx = reco::Vertex(PhiIt->vertex(), PhiIt->vertexCovariance(), PhiIt->vertexChi2(), PhiIt->vertexNdof(), PhiIt->numberOfDaughters() );
@@ -928,7 +938,7 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
                     transTracksAssoToVtx_copy.push_back(*transTrack_it);
                 }
                     
-                removeTracks3(transTracksAssoToVtx_copy,  SVTrackRef2);
+                removeTracks3(transTracksAssoToVtx_copy,  SVTrackRef);
                 //cout << "transTracksAssoToVtx_copy.size() after: " << transTracksAssoToVtx_copy.size() << endl;
 
                 if(transTracksAssoToVtx_copy.size()>1){
@@ -970,6 +980,57 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
                         Tr_Eta.push_back(Track3->eta());
                         Tr_Phi.push_back(Track3->phi());
                         Tr_TripletIndex.push_back(trIn2);
+
+                        //Refitted vars related to SV
+                        std::vector<reco::TransientTrack> Ttracks;
+                        Ttracks.push_back(transientTrack1);
+                        Ttracks.push_back(transientTrack2);
+                        Ttracks.push_back(transientTrack3);
+                        KalmanVertexFitter SVfitter (true);
+                        TransientVertex SVertex_ref = SVfitter.vertex(Ttracks);
+                        vector < TransientTrack > ttrks = SVertex_ref.refittedTracks();
+                        //cout<<"ttrks.size() :"<<ttrks.size()<<endl;
+
+                        TLorentzVector LV_Ds;
+                        LV_Ds.SetPxPyPzE(0, 0, 0, 0);
+
+                        if(SVertex_ref.isValid() && SVertex_ref.hasRefittedTracks() && ttrks.size()>2){
+                            //cout<<"VALID ref SV chi2="<<SVertex_ref.totalChiSquared()<<" NDF="<<SVertex_ref.degreesOfFreedom()<<endl;
+                            reco::Track SVTrack1 =ttrks.at(0).track();
+                            reco::Track SVTrack2 =ttrks.at(1).track();
+                            reco::Track SVTrack3 =ttrks.at(2).track();
+
+                            TLorentzVector LV1, LV2, LV3;
+                            LV1.SetPxPyPzE(SVTrack1.px(), SVTrack1.py(), SVTrack1.pz(), sqrt(pow(SVTrack1.p(), 2.0) + pow(0.10565, 2.0)));
+                            LV2.SetPxPyPzE(SVTrack2.px(), SVTrack2.py(), SVTrack2.pz(), sqrt(pow(SVTrack2.p(), 2.0) + pow(0.10565, 2.0)));
+                            LV3.SetPxPyPzE(SVTrack3.px(), SVTrack3.py(), SVTrack3.pz(), sqrt(pow(SVTrack3.p(), 2.0) + pow(0.13957018, 2.0)));
+                            LV_Ds = LV1 + LV2 + LV3;
+
+                            //cout<<"SVTrack1.pt() "<<SVTrack1.pt()<<" SVTrack1.eta() "<<SVTrack1.eta()<<" SVTrack1.phi() "<<SVTrack1.phi()<<endl;
+                            //cout<<"Track1.pt() "<<Track1.pt()<<" Track1.eta() "<<Track1.eta()<<" Track1.phi() "<<Track1.phi()<<endl;
+                            //cout<<"SVTrack2.pt() "<<SVTrack2.pt()<<" SVTrack2.eta() "<<SVTrack2.eta()<<" SVTrack2.phi() "<<SVTrack2.phi()<<endl;
+                            //cout<<"Track2.pt() "<<Track2.pt()<<" Track2.eta() "<<Track2.eta()<<" Track2.phi() "<<Track2.phi()<<endl;
+                            //cout<<"SVTrack3.pt() "<<SVTrack3.pt()<<" SVTrack3.eta() "<<SVTrack3.eta()<<" SVTrack3.phi() "<<SVTrack3.phi()<<endl;
+                            //cout<<"Track3.pt() "<<Track3.pt()<<" Track3.eta() "<<Track3.eta()<<" Track3.phi() "<<Track3.phi()<<endl;
+                            //cout<<"mu1->pt() "<<mu1->pt()<<" mu2->pt() "<<mu2->pt()<<" mu3->pt() "<<mu3->pt()<<endl;
+
+                            RefTrack1_Pt.push_back(SVTrack1.pt()); RefTrack1_Eta.push_back(SVTrack1.eta()); RefTrack1_Phi.push_back(SVTrack1.phi()); RefTrack1_TripletIndex.push_back(trIn2);
+                            RefTrack2_Pt.push_back(SVTrack2.pt()); RefTrack2_Eta.push_back(SVTrack2.eta()); RefTrack2_Phi.push_back(SVTrack2.phi()); RefTrack2_TripletIndex.push_back(trIn2);
+                            RefTrack3_Pt.push_back(SVTrack3.pt()); RefTrack3_Eta.push_back(SVTrack3.eta()); RefTrack3_Phi.push_back(SVTrack3.phi()); RefTrack3_TripletIndex.push_back(trIn2);
+
+                            RefittedSV_Chi2.push_back(SVertex_ref.totalChiSquared());
+                            RefittedSV_nDOF.push_back(SVertex_ref.degreesOfFreedom());
+                            RefittedSV_Mass.push_back(LV_Ds.M());
+                            cout<<"Bebug mass LV_Ds.M()="<<LV_Ds.M()<<endl;
+                        } else {
+                            RefTrack1_Pt.push_back(-99); RefTrack1_Eta.push_back(-99); RefTrack1_Phi.push_back(-99); RefTrack1_TripletIndex.push_back(trIn2);
+                            RefTrack2_Pt.push_back(-99); RefTrack2_Eta.push_back(-99); RefTrack2_Phi.push_back(-99); RefTrack2_TripletIndex.push_back(trIn2);
+                            RefTrack3_Pt.push_back(-99); RefTrack3_Eta.push_back(-99); RefTrack3_Phi.push_back(-99); RefTrack3_TripletIndex.push_back(trIn2);
+
+                            RefittedSV_Chi2.push_back(-99);
+                            RefittedSV_nDOF.push_back(-99);
+                            RefittedSV_Mass.push_back(-99);
+                        }
 
                         ///////////////Check Trigger Matching///////////////
                         float dR1 = 999., dR2 = 999., dR3 = 999.;
@@ -1225,6 +1286,8 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
                         //CachingVertex<5> fittedVertex = vertexFitter.vertex(tracksToVertex);
                         GlobalPoint PVertexPos  (PVertex.position());
                         GlobalPoint SVertexPos  (TripletVtx.x(), TripletVtx.y(), TripletVtx.z());
+                        math::XYZPoint PVertexPoint = math::XYZPoint(PVertexPos.x(), PVertexPos.y(), PVertexPos.z());
+
                         //cout<<" PV Coord after refit="<<PVertexPos.x()<<" y="<<PVertexPos.y()<<" z="<<PVertexPos.z()<<endl;
                         double FlightDist = TMath::Sqrt( pow(( PVertexPos.x() -SVertexPos.x()),2)+ pow(( PVertexPos.y() -SVertexPos.y()),2) + pow(( PVertexPos.z() -SVertexPos.z()),2));
                          
@@ -1282,7 +1345,84 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
                         dxyErr_mu1.push_back(signed_IP2D_mu1.second.error());
                         dxyErr_mu2.push_back(signed_IP2D_mu2.second.error());
                         dxyErr_mu3.push_back(signed_IP2D_mu3.second.error());
-                          
+                       
+                        /////////////////Study on phi->KK and K*->Kpi decays//////////////////////
+                        /////min mu+track vtx chi2
+                        double mu1_minvtxchi2 = 9999., mu2_minvtxchi2 = 9999., mu3_minvtxchi2 = 9999.;
+                        double IsoTrack1_Pt  = -99, IsoTrack1_Eta = -99, IsoTrack1_Phi = -99;
+                        double IsoTrack2_Pt  = -99, IsoTrack2_Eta = -99, IsoTrack2_Phi = -99;
+                        double IsoTrack3_Pt  = -99, IsoTrack3_Eta = -99, IsoTrack3_Phi = -99;
+                        for (std::vector<pat::PackedCandidate>::const_iterator cand = PFCands->begin(); cand != PFCands->end(); ++cand) {
+                            if(! ((cand->pt()>0.4) && (fabs(cand->eta())<2.4) && (cand->trackerLayersWithMeasurement()>5) && (cand->pixelLayersWithMeasurement()>1) && (cand->trackHighPurity())) ) continue;
+                            //track-PV dz<0.5
+                            double dz = abs(cand->dz(PVertexPoint));
+                            if(dz>=0.5) continue;
+
+                            reco::Track add_track = *(cand->bestTrack());
+                            //track-triplet collimation
+                            double dR = sqrt( reco::deltaR2(PhiIt->eta(), PhiIt->phi(), add_track.eta(), add_track.phi()) );
+                            if(dR>1) continue; //loose cut on track+tau collimation
+
+                            //skip track matching with mu2 and mu3
+                            double dR1 = sqrt( reco::deltaR2(Track1.eta(), Track1.phi(), add_track.eta(), add_track.phi()) );
+                            double dR2 = sqrt( reco::deltaR2(Track2.eta(), Track2.phi(), add_track.eta(), add_track.phi()) );
+                            double dR3 = sqrt( reco::deltaR2(Track_3.eta(), Track_3.phi(), add_track.eta(), add_track.phi()) );
+                            if(dR1<0.01 || dR2<0.01 || dR3<0.01) continue;
+
+                            reco::TransientTrack add_ttrack = theTransientTrackBuilder->build(*(cand->bestTrack()));
+                            //mu1
+                            if (cand->charge()*Track1.charge() < 0) { //OS
+                                //build mu1-track vertex
+                                std::vector<reco::TransientTrack> mu1_track;
+                                mu1_track.push_back(transientTrack1);
+                                mu1_track.push_back(add_ttrack);
+                                //vertex fit
+                                KalmanVertexFitter mu1_track_fitter (true);
+                                TransientVertex mu1_track_vtx = mu1_track_fitter.vertex(mu1_track);
+                                if(!mu1_track_vtx.isValid()) continue;
+
+                                double vtxchi2 = mu1_track_vtx.totalChiSquared();
+                                if (vtxchi2 < mu1_minvtxchi2) {mu1_minvtxchi2 = vtxchi2; IsoTrack1_Pt = add_track.pt(); IsoTrack1_Eta = add_track.eta(); IsoTrack1_Phi = add_track.phi();}
+                            }//mu1
+                            //mu2
+                            if (cand->charge()*Track2.charge() < 0) { //OS
+                                //build mu2-track vertex
+                                std::vector<reco::TransientTrack> mu2_track;
+                                mu2_track.push_back(transientTrack2);
+                                mu2_track.push_back(add_ttrack);
+                                //vertex fit
+                                KalmanVertexFitter mu2_track_fitter (true);
+                                TransientVertex mu2_track_vtx = mu2_track_fitter.vertex(mu2_track);
+                                if(!mu2_track_vtx.isValid()) continue;
+
+                                double vtxchi2 = mu2_track_vtx.totalChiSquared();
+                                if (vtxchi2 < mu2_minvtxchi2) {mu2_minvtxchi2 = vtxchi2; IsoTrack2_Pt = add_track.pt(); IsoTrack2_Eta = add_track.eta(); IsoTrack2_Phi = add_track.phi();}
+                            }//mu2
+                            //mu3
+                            if (cand->charge()*Track_3.charge() < 0) { //OS
+                                //build mu1-track vertex
+                                std::vector<reco::TransientTrack> mu3_track;
+                                mu3_track.push_back(transientTrack3);
+                                mu3_track.push_back(add_ttrack);
+                                //vertex fit
+                                KalmanVertexFitter mu3_track_fitter (true);
+                                TransientVertex mu3_track_vtx = mu3_track_fitter.vertex(mu3_track);
+                                if(!mu3_track_vtx.isValid()) continue;
+
+                                double vtxchi2 = mu3_track_vtx.totalChiSquared();
+                                if (vtxchi2 < mu3_minvtxchi2) {mu3_minvtxchi2 = vtxchi2; IsoTrack3_Pt = add_track.pt(); IsoTrack3_Eta = add_track.eta(); IsoTrack3_Phi = add_track.phi();}
+                            }//mu3
+                        }//loop on tracks
+                        cout<<"min mu1+track vtx chi2="<<mu1_minvtxchi2<<" iso track pt="<<IsoTrack1_Pt<<" eta="<<IsoTrack1_Eta<<" phi="<<IsoTrack1_Phi<<endl;
+                        cout<<"  collimation dR="<<sqrt( reco::deltaR2(Track1.eta(), Track1.phi(), IsoTrack1_Eta, IsoTrack1_Phi) )<<endl;
+                        cout<<"min mu2+track vtx chi2="<<mu2_minvtxchi2<<" iso track pt="<<IsoTrack2_Pt<<" eta="<<IsoTrack2_Eta<<" phi="<<IsoTrack2_Phi<<endl;
+                        cout<<"  collimation dR="<<sqrt( reco::deltaR2(Track2.eta(), Track2.phi(), IsoTrack2_Eta, IsoTrack2_Phi) )<<endl;
+                        cout<<"min mu3+track vtx chi2="<<mu3_minvtxchi2<<" iso track pt="<<IsoTrack3_Pt<<" eta="<<IsoTrack3_Eta<<" phi="<<IsoTrack3_Phi<<endl;
+                        cout<<"  collimation dR="<<sqrt( reco::deltaR2(Track_3.eta(), Track_3.phi(), IsoTrack3_Eta, IsoTrack3_Phi) )<<endl;
+                        IsoTrackMu1_Pt.push_back(IsoTrack1_Pt); IsoTrackMu1_Eta.push_back(IsoTrack1_Eta); IsoTrackMu1_Phi.push_back(IsoTrack1_Phi);
+                        IsoTrackMu2_Pt.push_back(IsoTrack2_Pt); IsoTrackMu2_Eta.push_back(IsoTrack2_Eta); IsoTrackMu2_Phi.push_back(IsoTrack2_Phi);
+                        IsoTrackMu3_Pt.push_back(IsoTrack3_Pt); IsoTrackMu3_Eta.push_back(IsoTrack3_Eta); IsoTrackMu3_Phi.push_back(IsoTrack3_Phi);
+   
                     }else{ //PVertex.isValid() && PhiIt->vertexChi2()>0
                         Mu01_Pt.push_back(-99);
                         Mu01_Eta.push_back(-99);
@@ -1346,7 +1486,18 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
                         Vtx13_x.push_back(-99);
                         Vtx13_y.push_back(-99);
                         Vtx13_z.push_back(-99);
-                        
+
+                        RefTrack1_Pt.push_back(-99); RefTrack1_Eta.push_back(-99); RefTrack1_Phi.push_back(-99); RefTrack1_TripletIndex.push_back(-99);
+                        RefTrack2_Pt.push_back(-99); RefTrack2_Eta.push_back(-99); RefTrack2_Phi.push_back(-99); RefTrack2_TripletIndex.push_back(-99);
+                        RefTrack3_Pt.push_back(-99); RefTrack3_Eta.push_back(-99); RefTrack3_Phi.push_back(-99); RefTrack3_TripletIndex.push_back(-99);
+                        RefittedSV_Chi2.push_back(-99);
+                        RefittedSV_nDOF.push_back(-99);
+                        RefittedSV_Mass.push_back(-99); 
+
+                        IsoTrackMu1_Pt.push_back(-99); IsoTrackMu1_Eta.push_back(-99); IsoTrackMu1_Phi.push_back(-99);
+                        IsoTrackMu2_Pt.push_back(-99); IsoTrackMu2_Eta.push_back(-99); IsoTrackMu2_Phi.push_back(-99);
+                        IsoTrackMu3_Pt.push_back(-99); IsoTrackMu3_Eta.push_back(-99); IsoTrackMu3_Phi.push_back(-99);
+
                         Mu01_dRtriggerMatch.push_back(-99);
                         Mu02_dRtriggerMatch.push_back(-99);
                         Tr_dRtriggerMatch.push_back(-99);
@@ -1895,7 +2046,38 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     Mu01_TripletIndex.clear();
     Mu02_TripletIndex.clear();
     Tr_TripletIndex.clear();
-    
+
+    RefTrack1_Pt.clear();
+    RefTrack1_Eta.clear();
+    RefTrack1_Phi.clear();
+    RefTrack1_TripletIndex.clear();
+
+    RefTrack2_Pt.clear();
+    RefTrack2_Eta.clear();
+    RefTrack2_Phi.clear();
+    RefTrack2_TripletIndex.clear();
+
+    RefTrack3_Pt.clear();
+    RefTrack3_Eta.clear();
+    RefTrack3_Phi.clear();
+    RefTrack3_TripletIndex.clear();
+
+    RefittedSV_Chi2.clear();
+    RefittedSV_nDOF.clear();
+    RefittedSV_Mass.clear();
+   
+    IsoTrackMu1_Pt.clear();
+    IsoTrackMu1_Eta.clear();
+    IsoTrackMu1_Phi.clear();
+
+    IsoTrackMu2_Pt.clear();
+    IsoTrackMu2_Eta.clear();
+    IsoTrackMu2_Phi.clear();
+
+    IsoTrackMu3_Pt.clear();
+    IsoTrackMu3_Eta.clear();
+    IsoTrackMu3_Phi.clear();
+ 
     Mu01_dRtriggerMatch.clear();
     Mu02_dRtriggerMatch.clear();
     Tr_dRtriggerMatch.clear();
@@ -2306,6 +2488,33 @@ void DsPhiPiTreeMakerMINI::beginJob() {
     tree_->Branch("FlightDistBS_SV", &FlightDistBS_SV);
     tree_->Branch("FlightDistBS_SV_Err", &FlightDistBS_SV_Err);
     tree_->Branch("FlightDistBS_SV_Significance", &FlightDistBS_SV_Significance);
+
+    tree_->Branch("RefTrack1_Pt",           &RefTrack1_Pt);
+    tree_->Branch("RefTrack1_Eta",          &RefTrack1_Eta);
+    tree_->Branch("RefTrack1_Phi",          &RefTrack1_Phi);
+    tree_->Branch("RefTrack1_TripletIndex", &RefTrack1_TripletIndex);
+    tree_->Branch("RefTrack2_Pt",           &RefTrack2_Pt);
+    tree_->Branch("RefTrack2_Eta",          &RefTrack2_Eta);
+    tree_->Branch("RefTrack2_Phi",          &RefTrack2_Phi);
+    tree_->Branch("RefTrack2_TripletIndex", &RefTrack2_TripletIndex);
+    tree_->Branch("RefTrack3_Pt",           &RefTrack3_Pt);
+    tree_->Branch("RefTrack3_Eta",          &RefTrack3_Eta);
+    tree_->Branch("RefTrack3_Phi",          &RefTrack3_Phi);
+    tree_->Branch("RefTrack3_TripletIndex", &RefTrack3_TripletIndex);
+
+    tree_->Branch("RefittedSV_Chi2", &RefittedSV_Chi2);
+    tree_->Branch("RefittedSV_nDOF", &RefittedSV_nDOF);
+    tree_->Branch("RefittedSV_Mass", &RefittedSV_Mass);
+
+    tree_->Branch("IsoTrackMu1_Pt",         &IsoTrackMu1_Pt);
+    tree_->Branch("IsoTrackMu1_Eta",        &IsoTrackMu1_Eta);
+    tree_->Branch("IsoTrackMu1_Phi",        &IsoTrackMu1_Phi);
+    tree_->Branch("IsoTrackMu2_Pt",         &IsoTrackMu2_Pt);
+    tree_->Branch("IsoTrackMu2_Eta",        &IsoTrackMu2_Eta);
+    tree_->Branch("IsoTrackMu2_Phi",        &IsoTrackMu2_Phi);
+    tree_->Branch("IsoTrackMu3_Pt",         &IsoTrackMu3_Pt);
+    tree_->Branch("IsoTrackMu3_Eta",        &IsoTrackMu3_Eta);
+    tree_->Branch("IsoTrackMu3_Phi",        &IsoTrackMu3_Phi);
 
     tree_->Branch("Mu1_dRtriggerMatch_Mu7", &Mu1_dRtriggerMatch_Mu7);
     tree_->Branch("Mu1_dRtriggerMatch_Mu8", &Mu1_dRtriggerMatch_Mu8);

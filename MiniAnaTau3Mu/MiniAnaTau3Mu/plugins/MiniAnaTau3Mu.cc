@@ -212,7 +212,7 @@ private:
     std::vector<double> RefTrack2_Pt, RefTrack2_Eta, RefTrack2_Phi, RefTrack2_TripletIndex;
     std::vector<double> RefTrack3_Pt, RefTrack3_Eta, RefTrack3_Phi, RefTrack3_TripletIndex;
 
-    std::vector<double> RefittedSV_Chi2, RefittedSV_nDOF;
+    std::vector<double> RefittedSV_Chi2, RefittedSV_nDOF, RefittedSV_Mass;
 
     std::vector<double> IsoTrackMu1_Pt, IsoTrackMu1_Eta, IsoTrackMu1_Phi;
     std::vector<double> IsoTrackMu2_Pt, IsoTrackMu2_Eta, IsoTrackMu2_Phi;
@@ -809,12 +809,9 @@ if(isAna){
 
         //cout<<"mu1 pt="<<mu1->pt()<<" m2="<<mu2->pt()<<" m3="<<mu3->pt()<<endl;
         TrackRef trk1, trk2, trk3;
-        if (mu1->isGlobalMuon()) { trk1 = mu1->get<TrackRef,reco::CombinedMuonTag>();}
-        else { trk1 = mu1->get<TrackRef>();}
-        if (mu2->isGlobalMuon()) { trk2 = mu2->get<TrackRef,reco::CombinedMuonTag>();}
-        else{ trk2 = mu2->get<TrackRef>();}
-        if (mu3->isGlobalMuon()) { trk3 = mu3->get<TrackRef,reco::CombinedMuonTag>();}
-        else{  trk3 = mu3->get<TrackRef>();}
+        trk1 = mu1->innerTrack();
+        trk2 = mu2->innerTrack();
+        trk3 = mu3->innerTrack();
         //cout<<" trk1 id="<<trk1.id()<<" tr2:"<<trk2.id()<<" trk3="<<trk3.id()<<endl;
         const reco::TransientTrack transientTrack1=theTransientTrackBuilder_->build( trk1 );
         const reco::TransientTrack transientTrack2=theTransientTrackBuilder_->build( trk2 );
@@ -952,6 +949,9 @@ if(isAna){
                     TransientVertex SVertex_ref = SVfitter.vertex(Ttracks);
                     vector < TransientTrack > ttrks = SVertex_ref.refittedTracks(); 
                     //cout<<"ttrks.size() :"<<ttrks.size()<<endl;
+                        
+                    TLorentzVector LVtau;
+                    LVtau.SetPxPyPzE(0, 0, 0, 0);
 
                     if(SVertex_ref.isValid() && SVertex_ref.hasRefittedTracks() && ttrks.size()>2){
                         //cout<<"VALID ref SV chi2="<<SVertex_ref.totalChiSquared()<<" NDF="<<SVertex_ref.degreesOfFreedom()<<endl;
@@ -959,6 +959,12 @@ if(isAna){
                         reco::Track SVTrack2 =ttrks.at(1).track();
                         reco::Track SVTrack3 =ttrks.at(2).track();
 
+                        TLorentzVector LV1, LV2, LV3;
+                        LV1.SetPxPyPzE(SVTrack1.px(), SVTrack1.py(), SVTrack1.pz(), sqrt(pow(SVTrack1.p(), 2.0) + pow(0.10565, 2.0)));
+                        LV2.SetPxPyPzE(SVTrack2.px(), SVTrack2.py(), SVTrack2.pz(), sqrt(pow(SVTrack2.p(), 2.0) + pow(0.10565, 2.0)));
+                        LV3.SetPxPyPzE(SVTrack3.px(), SVTrack3.py(), SVTrack3.pz(), sqrt(pow(SVTrack3.p(), 2.0) + pow(0.10565, 2.0)));
+                        LVtau = LV1 + LV2 + LV3;
+                        
                         //cout<<"SVTrack1.pt() "<<SVTrack1.pt()<<" SVTrack1.eta() "<<SVTrack1.eta()<<" SVTrack1.phi() "<<SVTrack1.phi()<<endl;
                         //cout<<"Track1.pt() "<<Track1.pt()<<" Track1.eta() "<<Track1.eta()<<" Track1.phi() "<<Track1.phi()<<endl;
                         //cout<<"SVTrack2.pt() "<<SVTrack2.pt()<<" SVTrack2.eta() "<<SVTrack2.eta()<<" SVTrack2.phi() "<<SVTrack2.phi()<<endl;
@@ -973,6 +979,8 @@ if(isAna){
 
                         RefittedSV_Chi2.push_back(SVertex_ref.totalChiSquared());
                         RefittedSV_nDOF.push_back(SVertex_ref.degreesOfFreedom());
+                        RefittedSV_Mass.push_back(LVtau.M());
+                        cout<<"Bebug mass LVtau.M()="<<LVtau.M()<<endl;
                     } else {
                         RefTrack1_Pt.push_back(-99); RefTrack1_Eta.push_back(-99); RefTrack1_Phi.push_back(-99); RefTrack1_TripletIndex.push_back(TripletIndex);
                         RefTrack2_Pt.push_back(-99); RefTrack2_Eta.push_back(-99); RefTrack2_Phi.push_back(-99); RefTrack2_TripletIndex.push_back(TripletIndex);
@@ -980,8 +988,8 @@ if(isAna){
 
                         RefittedSV_Chi2.push_back(-99);
                         RefittedSV_nDOF.push_back(-99);
+                        RefittedSV_Mass.push_back(-99);
                     }
-
                     ///////////////Check Trigger Matching///////////////
                     float dR1 = 999., dR2 = 999., dR3 = 999.;
                     float dR1_2017 = 999., dR2_2017 = 999., dR3_2017 = 999.;
@@ -1470,6 +1478,7 @@ if(isAna){
                     RefTrack3_Pt.push_back(-99); RefTrack3_Eta.push_back(-99); RefTrack3_Phi.push_back(-99); RefTrack3_TripletIndex.push_back(-99);
                     RefittedSV_Chi2.push_back(-99);
                     RefittedSV_nDOF.push_back(-99);
+                    RefittedSV_Mass.push_back(-99);
 
                     IsoTrackMu1_Pt.push_back(-99); IsoTrackMu1_Eta.push_back(-99); IsoTrackMu1_Phi.push_back(-99); 
                     IsoTrackMu2_Pt.push_back(-99); IsoTrackMu2_Eta.push_back(-99); IsoTrackMu2_Phi.push_back(-99); 
@@ -2083,6 +2092,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
 
     RefittedSV_Chi2.clear();
     RefittedSV_nDOF.clear();
+    RefittedSV_Mass.clear();
 
     IsoTrackMu1_Pt.clear();
     IsoTrackMu1_Eta.clear();
@@ -2486,6 +2496,7 @@ void MiniAnaTau3Mu::beginJob() {
 
     tree_->Branch("RefittedSV_Chi2", &RefittedSV_Chi2);
     tree_->Branch("RefittedSV_nDOF", &RefittedSV_nDOF);
+    tree_->Branch("RefittedSV_Mass", &RefittedSV_Mass);
 
     tree_->Branch("IsoTrackMu1_Pt",         &IsoTrackMu1_Pt);
     tree_->Branch("IsoTrackMu1_Eta",        &IsoTrackMu1_Eta);
