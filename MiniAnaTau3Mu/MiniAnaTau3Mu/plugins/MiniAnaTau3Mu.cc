@@ -255,7 +255,7 @@ private:
     
     std::vector<double> PV_x,  PV_y,  PV_z,  PV_NTracks;
     std::vector<double> BS_x,  BS_y,  BS_z;
-    std::vector<double> Vtx12_x, Vtx23_x, Vtx13_x, Vtx12_y, Vtx23_y, Vtx13_y, Vtx12_z, Vtx23_z, Vtx13_z, Vtx12_Chi2, Vtx23_Chi2, Vtx13_Chi2, Vtx12_nDOF, Vtx23_nDOF, Vtx13_nDOF;
+    std::vector<double> Vtx12_x, Vtx23_x, Vtx13_x, Vtx12_y, Vtx23_y, Vtx13_y, Vtx12_z, Vtx23_z, Vtx13_z, Vtx12_Mass, Vtx23_Mass, Vtx13_Mass, Vtx12_Chi2, Vtx23_Chi2, Vtx13_Chi2, Vtx12_nDOF, Vtx23_nDOF, Vtx13_nDOF;
     std::vector<int> NGoodTriplets;
     uint  evt, run, lumi, puN;
     std::vector<string>  Trigger_l1name;
@@ -990,6 +990,50 @@ if(isAna){
                         RefittedSV_nDOF.push_back(-99);
                         RefittedSV_Mass.push_back(-99);
                     }
+
+                    /////////////// DEBUG ///////////////
+                    /////////////// Check GenParticle ///////////////
+                    int genMu[] = {-999, -999, -999};
+                    double min_dR1 = 999;
+                    double min_dR2 = 999;
+                    double min_dR3 = 999;
+                    cout<<"reco candidate pt | eta | phi"<<endl;
+                    cout<<"mu1 "<<mu1->pt()<<" | "<<mu1->eta()<<" | "<<mu1->phi()<<endl;
+                    cout<<"mu2 "<<mu2->pt()<<" | "<<mu2->eta()<<" | "<<mu2->phi()<<endl;
+                    cout<<"mu3 "<<mu3->pt()<<" | "<<mu3->eta()<<" | "<<mu3->phi()<<endl;
+                    if(isMc){
+                        uint j=0;
+                        uint ngenP=genParticles->size();
+                        std::vector<int> genPidx;
+                        
+                        for(edm::View<reco::GenParticle>::const_iterator gp=genParticles->begin(); gp!=genParticles->end(), j<ngenP; ++gp , ++j){
+                            if( fabs(gp->pdgId())==13 ){
+                                cout<<"index "<<j<<endl;
+                                double dR1 = sqrt( reco::deltaR2(mu1->eta(), mu1->phi(), gp->eta(), gp->phi()) );
+                                double dR2 = sqrt( reco::deltaR2(mu2->eta(), mu2->phi(), gp->eta(), gp->phi()) );
+                                double dR3 = sqrt( reco::deltaR2(mu3->eta(), mu3->phi(), gp->eta(), gp->phi()) );
+                                cout<<"dR1="<<dR1<<", dR2="<<dR2<<", dR3="<<dR3<<endl;
+                                if(dR1 < min_dR1){ min_dR1 = dR1; genMu[0] = j; }
+                                if(dR2 < min_dR2){ min_dR2 = dR2; genMu[1] = j; }
+                                if(dR3 < min_dR3){ min_dR3 = dR3; genMu[2] = j; }
+                                if (gp->numberOfMothers()) {
+                                    cout<<"MotherPdgId="<<gp->mother(0)->pdgId()<<endl;
+                                    if(gp->mother(0)->mother(0)) {
+                                        cout<<"GrandMotherPdgId="<<gp->mother(0)->mother(0)->pdgId()<<endl;
+                                        if(gp->mother(0)->mother(0)->mother(0)) {
+                                            cout<<"GrandGrandMotherPdgId="<<gp->mother(0)->mother(0)->mother(0)->pdgId()<<endl;
+                                        }
+                                    }
+                                }
+                            } //pdgId 13
+                        }
+                        cout<<"genP mu1 index = "<<genMu[0]<<endl;
+                        cout<<"genP mu2 index = "<<genMu[1]<<endl;
+                        cout<<"genP mu3 index = "<<genMu[2]<<endl;
+                    } //isMC
+                    /////////////// DEBUG ///////////////
+
+
                     ///////////////Check Trigger Matching///////////////
                     float dR1 = 999., dR2 = 999., dR3 = 999.;
                     float dR1_2017 = 999., dR2_2017 = 999., dR3_2017 = 999.;
@@ -1119,10 +1163,22 @@ if(isAna){
                     SVTracks23_Vtx.push_back(transientTrack3);
                     SVTracks13_Vtx.push_back(transientTrack1);
                     SVTracks13_Vtx.push_back(transientTrack3);
+
                     ////DiMu12////
                     KalmanVertexFitter DiMu12_fitter (true);
                     TransientVertex DiMu12Vtx = DiMu12_fitter.vertex(SVTracks12_Vtx);
-                    if(DiMu12Vtx.isValid()){
+                    vector < TransientTrack > ttrks12 = DiMu12Vtx.refittedTracks(); 
+                    if(DiMu12Vtx.isValid() && DiMu12Vtx.hasRefittedTracks() && ttrks12.size()>1){
+                        //dimu invariant mass after refit
+                        reco::Track DimuTrack1 =ttrks12.at(0).track();
+                        reco::Track DimuTrack2 =ttrks12.at(1).track();
+
+                        TLorentzVector m1, m2, dimu;
+                        m1.SetPtEtaPhiM(DimuTrack1.pt(), DimuTrack1.eta(), DimuTrack1.phi(), 0.1056583745);
+                        m2.SetPtEtaPhiM(DimuTrack2.pt(), DimuTrack2.eta(), DimuTrack2.phi(), 0.1056583745);
+                        dimu = m1 + m2;
+                        Vtx12_Mass.push_back(dimu.M());
+                    
                         Vtx12_Chi2.push_back(DiMu12Vtx.totalChiSquared());
                         //cout << "Vtx12_Chi2: " << DiMu12Vtx.totalChiSquared() << endl;
                         Vtx12_nDOF.push_back(DiMu12Vtx.degreesOfFreedom());
@@ -1132,6 +1188,7 @@ if(isAna){
                         Vtx12_y.push_back(DiMu12Pos.y());
                         Vtx12_z.push_back(DiMu12Pos.z());
                     }else{
+                        Vtx12_Mass.push_back(-99);
                         Vtx12_Chi2.push_back(-99);
                         Vtx12_nDOF.push_back(-99);
                         Vtx12_x.push_back(-99);
@@ -1141,7 +1198,18 @@ if(isAna){
                     ////DiMu23///
                     KalmanVertexFitter DiMu23_fitter (true);
                     TransientVertex DiMu23Vtx = DiMu23_fitter.vertex(SVTracks23_Vtx);
-                    if(DiMu23Vtx.isValid()){
+                    vector < TransientTrack > ttrks23 = DiMu23Vtx.refittedTracks(); 
+                    if(DiMu23Vtx.isValid() && DiMu23Vtx.hasRefittedTracks() && ttrks23.size()>1){
+                        //dimu invariant mass after refit
+                        reco::Track DimuTrack1 =ttrks23.at(0).track();
+                        reco::Track DimuTrack2 =ttrks23.at(1).track();
+
+                        TLorentzVector m2, m3, dimu;
+                        m2.SetPtEtaPhiM(DimuTrack1.pt(), DimuTrack1.eta(), DimuTrack1.phi(), 0.1056583745);
+                        m3.SetPtEtaPhiM(DimuTrack2.pt(), DimuTrack2.eta(), DimuTrack2.phi(), 0.1056583745);
+                        dimu = m2 + m3;
+                        Vtx23_Mass.push_back(dimu.M());
+
                         Vtx23_Chi2.push_back(DiMu23Vtx.totalChiSquared());
                         //cout << "Vtx23_Chi2: " << DiMu23Vtx.totalChiSquared() << endl;
                         Vtx23_nDOF.push_back(DiMu23Vtx.degreesOfFreedom());
@@ -1151,6 +1219,7 @@ if(isAna){
                         Vtx23_y.push_back(DiMu23Pos.y());
                         Vtx23_z.push_back(DiMu23Pos.z());
                     }else{
+                        Vtx23_Mass.push_back(-99);
                         Vtx23_Chi2.push_back(-99);
                         Vtx23_nDOF.push_back(-99);
                         Vtx23_x.push_back(-99);
@@ -1160,7 +1229,18 @@ if(isAna){
                     ////DiMu13///
                     KalmanVertexFitter DiMu13_fitter (true);
                     TransientVertex DiMu13Vtx = DiMu13_fitter.vertex(SVTracks13_Vtx);
-                    if(DiMu13Vtx.isValid()){
+                    vector < TransientTrack > ttrks13 = DiMu13Vtx.refittedTracks(); 
+                    if(DiMu13Vtx.isValid() && DiMu13Vtx.hasRefittedTracks() && ttrks13.size()>1){
+                        //dimu invariant mass after refit
+                        reco::Track DimuTrack1 =ttrks13.at(0).track();
+                        reco::Track DimuTrack2 =ttrks13.at(1).track();
+
+                        TLorentzVector m1, m3, dimu;
+                        m1.SetPtEtaPhiM(DimuTrack1.pt(), DimuTrack1.eta(), DimuTrack1.phi(), 0.1056583745);
+                        m3.SetPtEtaPhiM(DimuTrack2.pt(), DimuTrack2.eta(), DimuTrack2.phi(), 0.1056583745);
+                        dimu = m1 + m3;
+                        Vtx13_Mass.push_back(dimu.M());
+
                         Vtx13_Chi2.push_back(DiMu13Vtx.totalChiSquared());
                         //cout << "Vtx13_Chi2: " << DiMu13Vtx.totalChiSquared() << endl;
                         Vtx13_nDOF.push_back(DiMu13Vtx.degreesOfFreedom());
@@ -1170,13 +1250,14 @@ if(isAna){
                         Vtx13_y.push_back(DiMu13Pos.y());
                         Vtx13_z.push_back(DiMu13Pos.z());
                     }else{
+                        Vtx13_Mass.push_back(-99);
                         Vtx13_Chi2.push_back(-99);
                         Vtx13_nDOF.push_back(-99);
                         Vtx13_x.push_back(-99);
                         Vtx13_y.push_back(-99);
                         Vtx13_z.push_back(-99);
                     }
-                    
+                     
         
                     /////////////////Defining ISO VAR related to the triplet//////////////////////
                     TLorentzVector LV1=TLorentzVector( mu1->px(), mu1->py(), mu1->pz(), mu1->energy() );
@@ -1457,16 +1538,19 @@ if(isAna){
                     RefittedPV_cov.push_back(cov);
                     TripletVtx_cov.push_back(cov);
                     //RefittedPV_Chi2.push_back(PVertex.);
+                    Vtx12_Mass.push_back(-99);
                     Vtx12_Chi2.push_back(-99);
                     Vtx12_nDOF.push_back(-99);
                     Vtx12_x.push_back(-99);
                     Vtx12_y.push_back(-99);
                     Vtx12_z.push_back(-99);
+                    Vtx23_Mass.push_back(-99);
                     Vtx23_Chi2.push_back(-99);
                     Vtx23_nDOF.push_back(-99);
                     Vtx23_x.push_back(-99);
                     Vtx23_y.push_back(-99);
                     Vtx23_z.push_back(-99);
+                    Vtx13_Mass.push_back(-99);
                     Vtx13_Chi2.push_back(-99);
                     Vtx13_nDOF.push_back(-99);
                     Vtx13_x.push_back(-99);
@@ -1888,6 +1972,7 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
     GenParticle_Eta.clear();
     GenParticle_Phi.clear();
     GenParticle_MotherPdgId.clear();
+    GenParticle_GrandMotherPdgId.clear();
     GenParticle_vx.clear();
     GenParticle_vy.clear();
     GenParticle_vz.clear();
@@ -2036,6 +2121,9 @@ for(edm::View<pat::Muon>::const_iterator mu=muons->begin(); mu!=muons->end(), k<
     Vtx12_z.clear();
     Vtx23_z.clear();
     Vtx13_z.clear();
+    Vtx12_Mass.clear();
+    Vtx23_Mass.clear();
+    Vtx13_Mass.clear();
     Vtx12_Chi2.clear();
     Vtx23_Chi2.clear();
     Vtx13_Chi2.clear();
@@ -2275,6 +2363,7 @@ void MiniAnaTau3Mu::beginJob() {
     tree_->Branch("GenParticle_Eta", &GenParticle_Eta);
     tree_->Branch("GenParticle_Phi", &GenParticle_Phi);
     tree_->Branch("GenParticle_MotherPdgId", &GenParticle_MotherPdgId);
+    tree_->Branch("GenParticle_GrandMotherPdgId", &GenParticle_GrandMotherPdgId);
     tree_->Branch("GenParticle_vx", &GenParticle_vx);
     tree_->Branch("GenParticle_vy", &GenParticle_vy);
     tree_->Branch("GenParticle_vz", &GenParticle_vz);
@@ -2419,6 +2508,9 @@ void MiniAnaTau3Mu::beginJob() {
     tree_->Branch("Vtx12_z", &Vtx12_z);
     tree_->Branch("Vtx23_z", &Vtx23_z);
     tree_->Branch("Vtx13_z", &Vtx13_z);
+    tree_->Branch("Vtx12_Mass", &Vtx12_Mass);
+    tree_->Branch("Vtx23_Mass", &Vtx23_Mass);
+    tree_->Branch("Vtx13_Mass", &Vtx13_Mass);
     tree_->Branch("Vtx12_Chi2", &Vtx12_Chi2);
     tree_->Branch("Vtx23_Chi2", &Vtx23_Chi2);
     tree_->Branch("Vtx13_Chi2", &Vtx13_Chi2);

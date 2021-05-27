@@ -1,0 +1,9 @@
+crab status -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018A_Mini_v1
+crab status -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018B_Mini_v1
+crab status -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018C_Mini_v1
+crab status -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018D_Mini_v1
+
+crab report -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018A_Mini_v1
+crab report -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018B_Mini_v1
+crab report -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018C_Mini_v1
+crab report -d crab_projects/crab_SkimTau3Mu_UL2018_Run2018D_Mini_v1

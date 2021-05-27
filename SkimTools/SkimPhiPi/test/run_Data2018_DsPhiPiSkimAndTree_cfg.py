@@ -15,18 +15,17 @@ process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cf
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 #process.load('DsPhiPiTreeMaker.DsPhiPiTreeMaker.DsPhiPiSkimAOD_cff')
 #process.load('DsPhiPiTreeMaker.DsPhiPiTreeMaker.DsPhiPiMuMuPi_BParking_cff')
-process.load('SkimTools.SkimPhiPi.DsPhiPiMuMuPi_BParking_cff')
-process.GlobalTag.globaltag = '102X_dataRun2_v13'
-#process.GlobalTag.globaltag = '102X_upgrade2018_realistic_v20'
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.load('SkimTools.SkimPhiPi.DsPhiPiMuMuPi_miniAOD_cff')
 
+process.GlobalTag.globaltag = '106X_dataRun2_v32' #data_UL 
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        #'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/270000/46876D1C-188D-7841-BE43-EEBD1DDDE57D.root',
-        'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/270000/460356CA-50A9-7A46-AE3A-C0C0F623A20A.root'
-        #'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/00001/D8F22FCD-F590-8F40-B9C2-C3F2271120A2.root',
-        #'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/00001/DAA5A759-D480-8440-914D-EE76DB5B7ED6.root', 
+        #data2018A_UL --> /DoubleMuonLowMass/Run2018A-12Nov2019_UL2018-v1/MINIAOD
+        'root://xrootd-cms.infn.it///store/data/Run2018A/DoubleMuonLowMass/MINIAOD/12Nov2019_UL2018-v1/00000/09AEBACA-F404-8247-9ACD-C16E819EA63E.root',
+        'root://xrootd-cms.infn.it///store/data/Run2018A/DoubleMuonLowMass/MINIAOD/12Nov2019_UL2018-v1/00000/0A802554-6083-7341-9D09-1C07FBBEEAE5.root',
+        'root://xrootd-cms.infn.it///store/data/Run2018A/DoubleMuonLowMass/MINIAOD/12Nov2019_UL2018-v1/00000/0AA2BF8E-5D43-974A-9F53-9208FB638352.root',
 	)
 )
 
@@ -48,13 +47,13 @@ process.Tree3Mu = cms.EDAnalyzer("DsPhiPiTreeMakerMINI",
                                  is2016Label = cms.untracked.bool(True),
                                  is2017Label = cms.untracked.bool(True),
                                  is2018Label = cms.untracked.bool(True),
-                                 isBParkingLabel = cms.untracked.bool(True),
+                                 isBParkingLabel = cms.untracked.bool(False),
                                  #is3MuLabel = cms.untracked.bool(False),
                                  muonLabel=cms.InputTag("looseMuons"),
                                  VertexLabel=cms.InputTag("offlineSlimmedPrimaryVertices"),
                                  TracksLabel=cms.InputTag("LooseTrack"),
                                  genParticleLabel=cms.InputTag("prunedGenParticles"),
-				#Cand3MuLabel=cms.InputTag("ThreeMuonsVtxKalmanFit"),
+                                 #Cand3MuLabel=cms.InputTag("ThreeMuonsVtxKalmanFit"),
                                  Cand2Mu1TrackLabel=cms.InputTag("TwoMuonsOneTrackKalmanVtxFit"),
                                  DiMuonLabel=cms.InputTag("DiMuonsVtxFit"),
                                  pileupSummary = cms.InputTag("slimmedAddPileupInfo"),

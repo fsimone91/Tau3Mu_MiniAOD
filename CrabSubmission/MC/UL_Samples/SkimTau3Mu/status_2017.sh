@@ -1,0 +1,6 @@
+crab status -d crab_projects/crab_SkimTau3Mu_Summer20UL17_BdTau3Mu_ModFilter_Mini_v1 
+crab status -d crab_projects/crab_SkimTau3Mu_Summer20UL17_BuTau3Mu_ModFilter_Mini_v1
+crab status -d crab_projects/crab_SkimTau3Mu_Summer20UL17_DsTau3Mu_ModFilter_Mini_v1
+crab report -d crab_projects/crab_SkimTau3Mu_Summer20UL17_BdTau3Mu_ModFilter_Mini_v1 
+crab report -d crab_projects/crab_SkimTau3Mu_Summer20UL17_BuTau3Mu_ModFilter_Mini_v1
+crab report -d crab_projects/crab_SkimTau3Mu_Summer20UL17_DsTau3Mu_ModFilter_Mini_v1

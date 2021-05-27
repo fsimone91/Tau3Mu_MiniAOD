@@ -15,18 +15,20 @@ process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cf
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 #process.load('DsPhiPiTreeMaker.DsPhiPiTreeMaker.DsPhiPiSkimAOD_cff')
 #process.load('DsPhiPiTreeMaker.DsPhiPiTreeMaker.DsPhiPiMuMuPi_BParking_cff')
-process.load('SkimTools.SkimPhiPi.DsPhiPiMuMuPi_BParking_cff')
-process.GlobalTag.globaltag = '102X_dataRun2_v13'
-#process.GlobalTag.globaltag = '102X_upgrade2018_realistic_v20'
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.load('SkimTools.SkimPhiPi.DsPhiPiMuMuPi_miniAOD_cff')
 
+process.GlobalTag.globaltag = '106X_upgrade2018_realistic_v15_L1v1' #Ultra Legacy MC2018
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        #'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/270000/46876D1C-188D-7841-BE43-EEBD1DDDE57D.root',
-        'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/270000/460356CA-50A9-7A46-AE3A-C0C0F623A20A.root'
-        #'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/00001/D8F22FCD-F590-8F40-B9C2-C3F2271120A2.root',
-        #'root://cmsxrootd.fnal.gov//store/data/Run2018A/ParkingBPH4/MINIAOD/05May2019-v1/00001/DAA5A759-D480-8440-914D-EE76DB5B7ED6.root', 
+        #Ultra Legacy MC DsPhiPi 2018 --> /DsToPhiPi_ToMuMu_MuFilter_TuneCP5_13TeV-pythia8-evtgen/RunIISummer20UL18MiniAOD-106X_upgrade2018_realistic_v11_L1v1-v3/MINIAODSIM
+        '/store/mc/RunIISummer20UL18MiniAOD/DsToPhiPi_ToMuMu_MuFilter_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/106X_upgrade2018_realistic_v11_L1v1-v3/20000/05C6F3A2-529C-A748-8B61-9742B5FD812C.root',
+        '/store/mc/RunIISummer20UL18MiniAOD/DsToPhiPi_ToMuMu_MuFilter_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/106X_upgrade2018_realistic_v11_L1v1-v3/20000/19655292-274B-AC47-847D-B7D835A6CCA0.root',
+        '/store/mc/RunIISummer20UL18MiniAOD/DsToPhiPi_ToMuMu_MuFilter_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/106X_upgrade2018_realistic_v11_L1v1-v3/20000/484E4DD4-4AA4-B54E-A141-7061534B050B.root',
+        '/store/mc/RunIISummer20UL18MiniAOD/DsToPhiPi_ToMuMu_MuFilter_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/106X_upgrade2018_realistic_v11_L1v1-v3/20000/765F3FA7-EB77-2844-B07F-F29A503EAA78.root',
+        '/store/mc/RunIISummer20UL18MiniAOD/DsToPhiPi_ToMuMu_MuFilter_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/106X_upgrade2018_realistic_v11_L1v1-v3/20000/CAF5D3E8-E6ED-8142-80EB-CA43E7C881BA.root',
+        '/store/mc/RunIISummer20UL18MiniAOD/DsToPhiPi_ToMuMu_MuFilter_TuneCP5_13TeV-pythia8-evtgen/MINIAODSIM/106X_upgrade2018_realistic_v11_L1v1-v3/20000/D80B669A-2817-DB4E-88BB-4FF297137408.root',
 	)
 )
 
@@ -43,18 +45,18 @@ process.unpackedPatTrigger = cms.EDProducer("PATTriggerObjectStandAloneUnpacker"
 )
 
 process.Tree3Mu = cms.EDAnalyzer("DsPhiPiTreeMakerMINI",
-                                 isMcLabel = cms.untracked.bool(False),
+                                 isMcLabel = cms.untracked.bool(True),
                                  isAnaLabel = cms.untracked.bool(True),
                                  is2016Label = cms.untracked.bool(True),
                                  is2017Label = cms.untracked.bool(True),
                                  is2018Label = cms.untracked.bool(True),
-                                 isBParkingLabel = cms.untracked.bool(True),
+                                 isBParkingLabel = cms.untracked.bool(False),
                                  #is3MuLabel = cms.untracked.bool(False),
                                  muonLabel=cms.InputTag("looseMuons"),
                                  VertexLabel=cms.InputTag("offlineSlimmedPrimaryVertices"),
                                  TracksLabel=cms.InputTag("LooseTrack"),
                                  genParticleLabel=cms.InputTag("prunedGenParticles"),
-				#Cand3MuLabel=cms.InputTag("ThreeMuonsVtxKalmanFit"),
+                                 #Cand3MuLabel=cms.InputTag("ThreeMuonsVtxKalmanFit"),
                                  Cand2Mu1TrackLabel=cms.InputTag("TwoMuonsOneTrackKalmanVtxFit"),
                                  DiMuonLabel=cms.InputTag("DiMuonsVtxFit"),
                                  pileupSummary = cms.InputTag("slimmedAddPileupInfo"),

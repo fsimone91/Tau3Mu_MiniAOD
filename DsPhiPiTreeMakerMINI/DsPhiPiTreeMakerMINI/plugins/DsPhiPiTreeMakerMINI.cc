@@ -1778,7 +1778,7 @@ DsPhiPiTreeMakerMINI::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     edm::View<pat::PackedCandidate>::const_iterator trEnd = trackCollection->end();
     
     for (; trIt != trEnd; ++trIt){
-        if( trIt->pt() <= 2 || abs(trIt->eta())>=2.4 || trIt->charge()==0 || trIt->trackerLayersWithMeasurement()<=5 || trIt->pixelLayersWithMeasurement()<1 || (!(trIt->hasTrackDetails())) ) continue;
+        if( trIt->pt() <= 1.0 || abs(trIt->eta())>=2.4 || trIt->charge()==0 || trIt->trackerLayersWithMeasurement()<=5 || trIt->pixelLayersWithMeasurement()<1 || (!(trIt->hasTrackDetails())) ) continue;
         const reco::Track track = ( *(trIt->bestTrack()) );
     
         Track_pt.push_back(track.pt());
